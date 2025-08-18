@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 제목
-st.title("📐 함수 그래프 & 미적분 시각화")
+st.title("딸기")
 
 # 사용자 입력
 func_input = st.text_input("함수를 입력하세요 (변수는 x)", "sin(x)")
