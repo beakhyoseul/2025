@@ -1,4 +1,5 @@
 streamlit
-sympy
+plotly
 numpy
-matplotlib
+sympy
+streamlit-plotly-events
