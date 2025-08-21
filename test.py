@@ -13,9 +13,11 @@ expr1_str = st.sidebar.text_input("첫 번째 식 f(x) =", "x**2 - 2")
 expr2_str = st.sidebar.text_input("두 번째 식 g(x) =", "0")
 
 x_min, x_max = st.sidebar.slider("x 범위", -10, 10, (-5, 5))
-
 x = sp.symbols("x")
 
+# -------------------------------
+# Preprocess & Parse
+# -------------------------------
 def preprocess(expr_str):
     expr_str = expr_str.replace("^", "**")
     expr_str = expr_str.replace(")(", ")*(")
@@ -37,7 +39,7 @@ expr1 = parse_equation(expr1_str)
 expr2 = parse_equation(expr2_str)
 
 # -------------------------------
-# Solve intersection (Exact only)
+# Solve intersection (Exact)
 # -------------------------------
 solutions_exact = []
 eq = sp.Eq(expr1, expr2)
@@ -45,7 +47,6 @@ eq = sp.Eq(expr1, expr2)
 try:
     sols = sp.solve(eq, x)
     for s in sols:
-        # 실수만
         if s.is_real:
             y_exact = expr1.subs(x, s)
             solutions_exact.append((s, y_exact))
@@ -58,10 +59,29 @@ except Exception as e:
 st.subheader("🎯 교점 결과")
 
 if solutions_exact:
+    # 무리수 형태로 출력
     exact_text = ",  ".join([f"({sp.nsimplify(px)}, {sp.nsimplify(py)})" for px, py in solutions_exact])
     st.markdown(f"**교점 좌표 (Exact):** {exact_text}")
 else:
     st.info("실수 해가 없습니다.")
+
+# -------------------------------
+# Safe evaluation for plotting
+# -------------------------------
+def safe_eval(f, X):
+    Y = []
+    for xi in X:
+        try:
+            yi = f(xi)
+            if isinstance(yi, sp.Expr):
+                yi = float(yi.evalf())
+            if np.isfinite(yi):
+                Y.append(yi)
+            else:
+                Y.append(np.nan)
+        except Exception:
+            Y.append(np.nan)
+    return np.array(Y)
 
 # -------------------------------
 # Graph
@@ -76,22 +96,14 @@ except Exception as e:
     st.stop()
 
 X = np.linspace(x_min, x_max, 500)
-
-# 예외 처리 추가 (함수 계산 실패 방지)
-try:
-    Y1 = f1(X)
-except Exception:
-    Y1 = np.zeros_like(X)
-try:
-    Y2 = f2(X)
-except Exception:
-    Y2 = np.zeros_like(X)
+Y1 = safe_eval(f1, X)
+Y2 = safe_eval(f2, X)
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=X, y=Y1, mode="lines", name="f(x) / 식1"))
 fig.add_trace(go.Scatter(x=X, y=Y2, mode="lines", name="g(x) / 식2"))
 
-# 교점 표시
+# 교점 표시 (좌표 레이블 포함)
 if solutions_exact:
     Xp = [float(px.evalf()) for px, _ in solutions_exact]
     Yp = [float(py.evalf()) for _, py in solutions_exact]
