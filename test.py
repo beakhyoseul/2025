@@ -3,6 +3,9 @@ import sympy as sp
 import numpy as np
 import plotly.graph_objects as go
 
+# -------------------------------
+# 앱 제목
+# -------------------------------
 st.title("☆**")
 
 # -------------------------------
@@ -48,25 +51,25 @@ try:
     sols = sp.solve(eq, x)
     for s in sols:
         if s.is_real:
-            y_exact = expr1.subs(x, s)
+            y_exact = expr1.subs(x, s)  # 심볼릭 형태 유지
             solutions_exact.append((s, y_exact))
 except Exception as e:
     st.warning(f"교점 계산 오류: {e}")
 
 # -------------------------------
-# Output results (LaTeX for root display)
+# Output results with LaTeX (루트 기호)
 # -------------------------------
 st.subheader("🎯 교점 결과")
 
 if solutions_exact:
     for px, py in solutions_exact:
-        # 반드시 evalf 하지 않고 sympy 객체 그대로 전달
-        st.latex(sp.Eq(sp.Symbol('x'), px))   # x = -√2 형태
-        st.latex(sp.Eq(sp.Symbol('y'), py))   # y = 값
+        st.latex(f"x = {sp.latex(px)}")
+        st.latex(f"y = {sp.latex(py)}")
 else:
     st.info("실수 해가 없습니다.")
+
 # -------------------------------
-# Safe evaluation for plotting
+# Safe evaluation for plotting (소수 근사값)
 # -------------------------------
 def safe_eval(f, X):
     Y = []
