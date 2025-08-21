@@ -23,18 +23,18 @@ def preprocess(expr_str):
     return expr_str
 
 def parse_equation(expr_str):
-    if "=" in expr_str:
-        left, right = expr_str.split("=")
-        return sp.sympify(preprocess(left)) - sp.sympify(preprocess(right))
-    else:
-        return sp.sympify(preprocess(expr_str))
+    try:
+        if "=" in expr_str:
+            left, right = expr_str.split("=")
+            return sp.sympify(preprocess(left)) - sp.sympify(preprocess(right))
+        else:
+            return sp.sympify(preprocess(expr_str))
+    except Exception as e:
+        st.error(f"수식 파싱 오류: {e}")
+        st.stop()
 
-try:
-    expr1 = parse_equation(expr1_str)
-    expr2 = parse_equation(expr2_str)
-except Exception as e:
-    st.error(f"입력 오류: {e}")
-    st.stop()
+expr1 = parse_equation(expr1_str)
+expr2 = parse_equation(expr2_str)
 
 # -------------------------------
 # Solve intersection (Exact only)
@@ -45,11 +45,12 @@ eq = sp.Eq(expr1, expr2)
 try:
     sols = sp.solve(eq, x)
     for s in sols:
+        # 실수만
         if s.is_real:
             y_exact = expr1.subs(x, s)
             solutions_exact.append((s, y_exact))
-except Exception:
-    pass
+except Exception as e:
+    st.warning(f"교점 계산 오류: {e}")
 
 # -------------------------------
 # Output results
@@ -57,7 +58,7 @@ except Exception:
 st.subheader("🎯 교점 결과")
 
 if solutions_exact:
-    exact_text = ",  ".join([f"({sp.pretty(px)}, {sp.pretty(py)})" for px, py in solutions_exact])
+    exact_text = ",  ".join([f"({sp.nsimplify(px)}, {sp.nsimplify(py)})" for px, py in solutions_exact])
     st.markdown(f"**교점 좌표 (Exact):** {exact_text}")
 else:
     st.info("실수 해가 없습니다.")
@@ -68,33 +69,46 @@ else:
 st.subheader("📈 그래프")
 
 try:
-    f1 = sp.lambdify(x, expr1, "numpy")
-    f2 = sp.lambdify(x, expr2, "numpy")
+    f1 = sp.lambdify(x, expr1, modules=["numpy"])
+    f2 = sp.lambdify(x, expr2, modules=["numpy"])
 except Exception as e:
     st.error(f"그래프 변환 오류: {e}")
     st.stop()
 
 X = np.linspace(x_min, x_max, 500)
-Y1, Y2 = f1(X), f2(X)
+
+# 예외 처리 추가 (함수 계산 실패 방지)
+try:
+    Y1 = f1(X)
+except Exception:
+    Y1 = np.zeros_like(X)
+try:
+    Y2 = f2(X)
+except Exception:
+    Y2 = np.zeros_like(X)
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=X, y=Y1, mode="lines", name="f(x) / 식1"))
 fig.add_trace(go.Scatter(x=X, y=Y2, mode="lines", name="g(x) / 식2"))
 
-# 그래프에서는 소수 근사 좌표로 찍어줘야 함
+# 교점 표시
 if solutions_exact:
     Xp = [float(px.evalf()) for px, _ in solutions_exact]
     Yp = [float(py.evalf()) for _, py in solutions_exact]
     fig.add_trace(go.Scatter(
         x=Xp, y=Yp,
-        mode="markers",
+        mode="markers+text",
         marker=dict(size=10, color="red"),
+        text=[f"({px.evalf():.2f},{py.evalf():.2f})" for px, py in solutions_exact],
+        textposition="top right",
         name="교점"
     ))
 
 fig.update_layout(
-    xaxis_title="x", yaxis_title="y",
-    width=750, height=500,
+    xaxis_title="x",
+    yaxis_title="y",
+    width=750,
+    height=500,
     template="plotly_white"
 )
 
