@@ -54,13 +54,12 @@ except Exception as e:
     st.warning(f"교점 계산 오류: {e}")
 
 # -------------------------------
-# Output results
+# Output results (LaTeX for root display)
 # -------------------------------
 st.subheader("🎯 교점 결과")
 
 if solutions_exact:
-    # 무리수 형태로 출력
-    exact_text = ",  ".join([f"({sp.nsimplify(px)}, {sp.nsimplify(py)})" for px, py in solutions_exact])
+    exact_text = ",  ".join([f"$({sp.latex(px)}, {sp.latex(py)})$" for px, py in solutions_exact])
     st.markdown(f"**교점 좌표 (Exact):** {exact_text}")
 else:
     st.info("실수 해가 없습니다.")
@@ -103,7 +102,9 @@ fig = go.Figure()
 fig.add_trace(go.Scatter(x=X, y=Y1, mode="lines", name="f(x) / 식1"))
 fig.add_trace(go.Scatter(x=X, y=Y2, mode="lines", name="g(x) / 식2"))
 
-# 교점 표시 (좌표 레이블 포함)
+# -------------------------------
+# Plot intersection points with numeric labels
+# -------------------------------
 if solutions_exact:
     Xp = [float(px.evalf()) for px, _ in solutions_exact]
     Yp = [float(py.evalf()) for _, py in solutions_exact]
@@ -111,7 +112,7 @@ if solutions_exact:
         x=Xp, y=Yp,
         mode="markers+text",
         marker=dict(size=10, color="red"),
-        text=[f"({px.evalf():.2f},{py.evalf():.2f})" for px, py in solutions_exact],
+        text=[f"({px:.4f},{py:.4f})" for px, py in zip(Xp, Yp)],
         textposition="top right",
         name="교점"
     ))
