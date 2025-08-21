@@ -59,11 +59,10 @@ except Exception as e:
 st.subheader("🎯 교점 결과")
 
 if solutions_exact:
-    exact_text = ",  ".join([f"$({sp.latex(px)}, {sp.latex(py)})$" for px, py in solutions_exact])
-    st.markdown(f"**교점 좌표 (Exact):** {exact_text}")
+    for px, py in solutions_exact:
+        st.latex(f"({sp.latex(px)}, {sp.latex(py)})")
 else:
     st.info("실수 해가 없습니다.")
-
 # -------------------------------
 # Safe evaluation for plotting
 # -------------------------------
