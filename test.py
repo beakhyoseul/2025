@@ -85,10 +85,18 @@ fig.add_trace(go.Scatter(x=X, y=Y2, mode="lines", name="g(x) / 식2"))
 if solutions:
     Xp, Yp = zip(*solutions)
     fig.add_trace(go.Scatter(
-        x=Xp, y=Yp, mode="markers+text",
-        text=[f"({x:.2f},{y:.2f})" for x, y in solutions],
-        textposition="top center", name="교점"
+        x=Xp, y=Yp, mode="markers",
+        marker=dict(size=10, color="red"),
+        name="교점"
     ))
+    # 좌표 텍스트를 별도 trace로 추가
+    for (xv, yv) in solutions:
+        fig.add_annotation(
+            x=xv, y=yv,
+            text=f"({xv:.2f}, {yv:.2f})",
+            showarrow=True, arrowhead=2,
+            ax=20, ay=-20, bgcolor="white"
+        )
 
 fig.update_layout(
     xaxis_title="x", yaxis_title="y",
