@@ -48,11 +48,14 @@ solutions_exact = []
 eq = sp.Eq(expr1, expr2)
 
 try:
-    sols = sp.solve(eq, x)
+    sols = sp.solve(eq, x, rational=True)  # rational=True 사용
     for s in sols:
-        if s.is_real:
-            y_exact = expr1.subs(x, s)  # 심볼릭 형태 유지
-            solutions_exact.append((s, y_exact))
+        # 심볼릭 형태로 변환
+        s_sym = sp.nsimplify(sp.sqrtdenest(s), rational=True)
+        if s_sym.is_real:
+            y_exact = expr1.subs(x, s_sym)
+            y_exact = sp.nsimplify(sp.sqrtdenest(y_exact), rational=True)
+            solutions_exact.append((s_sym, y_exact))
 except Exception as e:
     st.warning(f"교점 계산 오류: {e}")
 
