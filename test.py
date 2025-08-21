@@ -60,7 +60,9 @@ st.subheader("🎯 교점 결과")
 
 if solutions_exact:
     for px, py in solutions_exact:
-        st.latex(f"({sp.latex(px)}, {sp.latex(py)})")
+        # 반드시 evalf 하지 않고 sympy 객체 그대로 전달
+        st.latex(sp.Eq(sp.Symbol('x'), px))   # x = -√2 형태
+        st.latex(sp.Eq(sp.Symbol('y'), py))   # y = 값
 else:
     st.info("실수 해가 없습니다.")
 # -------------------------------
