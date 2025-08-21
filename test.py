@@ -2,7 +2,6 @@ import streamlit as st
 import sympy as sp
 import numpy as np
 import plotly.graph_objects as go
-import pandas as pd
 
 st.title("☆**")
 
@@ -10,8 +9,8 @@ st.title("☆**")
 # Sidebar inputs
 # -------------------------------
 st.sidebar.header("⚙️ 입력 설정")
-expr1_str = st.sidebar.text_input("첫 번째 식 f(x) =", "x**2 - 1")
-expr2_str = st.sidebar.text_input("두 번째 식 g(x) =", "cos(x)")
+expr1_str = st.sidebar.text_input("첫 번째 식 f(x) =", "x**2 - 2")
+expr2_str = st.sidebar.text_input("두 번째 식 g(x) =", "0")
 
 x_min, x_max = st.sidebar.slider("x 범위", -10, 10, (-5, 5))
 
@@ -38,18 +37,17 @@ except Exception as e:
     st.stop()
 
 # -------------------------------
-# Solve intersection
+# Solve intersection (Exact only)
 # -------------------------------
-solutions = []
+solutions_exact = []
 eq = sp.Eq(expr1, expr2)
 
 try:
     sols = sp.solve(eq, x)
     for s in sols:
-        s_eval = s.evalf()
-        if s_eval.is_real:
-            y_val = expr1.subs(x, s_eval).evalf()
-            solutions.append([float(s_eval), float(y_val)])
+        if s.is_real:
+            y_exact = expr1.subs(x, s)
+            solutions_exact.append((s, y_exact))
 except Exception:
     pass
 
@@ -57,9 +55,10 @@ except Exception:
 # Output results
 # -------------------------------
 st.subheader("🎯 교점 결과")
-if solutions:
-    df = pd.DataFrame(solutions, columns=["x", "y"])
-    st.dataframe(df, use_container_width=True)
+
+if solutions_exact:
+    exact_text = ",  ".join([f"({sp.pretty(px)}, {sp.pretty(py)})" for px, py in solutions_exact])
+    st.markdown(f"**교점 좌표 (Exact):** {exact_text}")
 else:
     st.info("실수 해가 없습니다.")
 
@@ -82,21 +81,16 @@ fig = go.Figure()
 fig.add_trace(go.Scatter(x=X, y=Y1, mode="lines", name="f(x) / 식1"))
 fig.add_trace(go.Scatter(x=X, y=Y2, mode="lines", name="g(x) / 식2"))
 
-if solutions:
-    Xp, Yp = zip(*solutions)
+# 그래프에서는 소수 근사 좌표로 찍어줘야 함
+if solutions_exact:
+    Xp = [float(px.evalf()) for px, _ in solutions_exact]
+    Yp = [float(py.evalf()) for _, py in solutions_exact]
     fig.add_trace(go.Scatter(
-        x=Xp, y=Yp, mode="markers",
+        x=Xp, y=Yp,
+        mode="markers",
         marker=dict(size=10, color="red"),
         name="교점"
     ))
-    # 좌표 텍스트를 별도 trace로 추가
-    for (xv, yv) in solutions:
-        fig.add_annotation(
-            x=xv, y=yv,
-            text=f"({xv:.2f}, {yv:.2f})",
-            showarrow=True, arrowhead=2,
-            ax=20, ay=-20, bgcolor="white"
-        )
 
 fig.update_layout(
     xaxis_title="x", yaxis_title="y",
